@@ -508,16 +508,14 @@ impl IndexScheduler {
                             .file_store
                             .all_uuids()
                             .unwrap()
-                            .find(|uuid| uuid.as_ref().unwrap() == &content_file)
-                            .is_some());
+                            .any(|uuid| uuid.as_ref().unwrap() == &content_file));
                     }
                     Status::Succeeded | Status::Failed | Status::Canceled => {
                         assert!(self
                             .file_store
                             .all_uuids()
                             .unwrap()
-                            .find(|uuid| uuid.as_ref().unwrap() == &content_file)
-                            .is_none());
+                            .all(|uuid| uuid.as_ref().unwrap() != &content_file));
                     }
                 }
             }
