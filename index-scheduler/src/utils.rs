@@ -504,10 +504,20 @@ impl IndexScheduler {
             if let KindWithContent::DocumentAdditionOrUpdate { content_file, .. } = kind {
                 match status {
                     Status::Enqueued | Status::Processing => {
-                        assert!(self.file_store.__all_uuids().contains(&content_file));
+                        assert!(self
+                            .file_store
+                            .all_uuids()
+                            .unwrap()
+                            .find(|uuid| uuid.as_ref().unwrap() == &content_file)
+                            .is_some());
                     }
                     Status::Succeeded | Status::Failed | Status::Canceled => {
-                        assert!(!self.file_store.__all_uuids().contains(&content_file));
+                        assert!(self
+                            .file_store
+                            .all_uuids()
+                            .unwrap()
+                            .find(|uuid| uuid.as_ref().unwrap() == &content_file)
+                            .is_none());
                     }
                 }
             }
