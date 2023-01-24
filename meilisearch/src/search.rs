@@ -74,6 +74,99 @@ impl SearchQuery {
     }
 }
 
+/// A `SearchQuery` + an index UID.
+// This struct contains the fields of `SearchQuery` inline.
+// This is because neither deserr nor serde support `flatten` when using `deny_unknown_fields.
+// The `From<SearchQueryWithIndex>` implementation ensures both structs remain up to date.
+#[derive(Debug, deserr::DeserializeFromValue)]
+#[deserr(error = DeserrError, rename_all = camelCase, deny_unknown_fields)]
+pub struct SearchQueryWithIndex {
+    pub index_uid: String,
+    #[deserr(error = DeserrError<InvalidSearchQ>)]
+    pub q: Option<String>,
+    #[deserr(error = DeserrError<InvalidSearchOffset>, default = DEFAULT_SEARCH_OFFSET())]
+    pub offset: usize,
+    #[deserr(error = DeserrError<InvalidSearchLimit>, default = DEFAULT_SEARCH_LIMIT())]
+    pub limit: usize,
+    #[deserr(error = DeserrError<InvalidSearchPage>)]
+    pub page: Option<usize>,
+    #[deserr(error = DeserrError<InvalidSearchHitsPerPage>)]
+    pub hits_per_page: Option<usize>,
+    #[deserr(error = DeserrError<InvalidSearchAttributesToRetrieve>)]
+    pub attributes_to_retrieve: Option<BTreeSet<String>>,
+    #[deserr(error = DeserrError<InvalidSearchAttributesToCrop>)]
+    pub attributes_to_crop: Option<Vec<String>>,
+    #[deserr(error = DeserrError<InvalidSearchCropLength>, default = DEFAULT_CROP_LENGTH())]
+    pub crop_length: usize,
+    #[deserr(error = DeserrError<InvalidSearchAttributesToHighlight>)]
+    pub attributes_to_highlight: Option<HashSet<String>>,
+    #[deserr(error = DeserrError<InvalidSearchShowMatchesPosition>, default)]
+    pub show_matches_position: bool,
+    #[deserr(error = DeserrError<InvalidSearchFilter>)]
+    pub filter: Option<Value>,
+    #[deserr(error = DeserrError<InvalidSearchSort>)]
+    pub sort: Option<Vec<String>>,
+    #[deserr(error = DeserrError<InvalidSearchFacets>)]
+    pub facets: Option<Vec<String>>,
+    #[deserr(error = DeserrError<InvalidSearchHighlightPreTag>, default = DEFAULT_HIGHLIGHT_PRE_TAG())]
+    pub highlight_pre_tag: String,
+    #[deserr(error = DeserrError<InvalidSearchHighlightPostTag>, default = DEFAULT_HIGHLIGHT_POST_TAG())]
+    pub highlight_post_tag: String,
+    #[deserr(error = DeserrError<InvalidSearchCropMarker>, default = DEFAULT_CROP_MARKER())]
+    pub crop_marker: String,
+    #[deserr(error = DeserrError<InvalidSearchMatchingStrategy>, default)]
+    pub matching_strategy: MatchingStrategy,
+}
+
+impl SearchQueryWithIndex {
+    pub fn into_index_query(self) -> (String, SearchQuery) {
+        let SearchQueryWithIndex {
+            index_uid,
+            q,
+            offset,
+            limit,
+            page,
+            hits_per_page,
+            attributes_to_retrieve,
+            attributes_to_crop,
+            crop_length,
+            attributes_to_highlight,
+            show_matches_position,
+            filter,
+            sort,
+            facets,
+            highlight_pre_tag,
+            highlight_post_tag,
+            crop_marker,
+            matching_strategy,
+        } = self;
+        (
+            index_uid,
+            SearchQuery {
+                q,
+                offset,
+                limit,
+                page,
+                hits_per_page,
+                attributes_to_retrieve,
+                attributes_to_crop,
+                crop_length,
+                attributes_to_highlight,
+                show_matches_position,
+                filter,
+                sort,
+                facets,
+                highlight_pre_tag,
+                highlight_post_tag,
+                crop_marker,
+                matching_strategy,
+                // do not use ..Default::default() here,
+                // rather add any missing field from `SearchQuery` to `SearchQueryWithIndex`
+            },
+        )
+    }
+}
+
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq, DeserializeFromValue)]
 #[deserr(rename_all = camelCase)]
 #[serde(rename_all = "camelCase")]
